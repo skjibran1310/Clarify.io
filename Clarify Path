@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ClarityPath Pro | Gemini 3.0</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1A5276;
+            --secondary: #5499C7;
+            --bg: #F4F7F9;
+            --card: #FFFFFF;
+            --accent: #D6EAF8;
+            --text-main: #2E4053;
+            --text-dim: #85929E;
+            --success: #27AE60;
+            --danger: #E74C3C;
+            --shadow: 0 10px 30px rgba(26, 82, 118, 0.1);
+            --radius: 16px;
+        }
+
+        * { box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container { width: 100%; max-width: 650px; }
+
+        /* --- Header --- */
+        header { text-align: center; margin-bottom: 30px; }
+        header h1 { font-weight: 800; font-size: 2.2rem; color: var(--primary); margin: 0; letter-spacing: -1.5px; }
+        header p { color: var(--text-dim); font-size: 0.9rem; font-weight: 400; }
+
+        /* --- Main Input Card --- */
+        .card {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 24px;
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(255,255,255,0.6);
+            margin-bottom: 20px;
+            transition: transform 0.3s ease;
+        }
+
+        label { display: block; font-weight: 600; font-size: 0.8rem; text-transform: uppercase; color: var(--secondary); margin-bottom: 10px; }
+
+        textarea {
+            width: 100%;
+            height: 160px;
+            padding: 16px;
+            border: 2px solid var(--accent);
+            border-radius: var(--radius);
+            font-size: 1rem;
+            font-family: inherit;
+            resize: none;
+            transition: all 0.3s ease;
+            background: #FAFDFF;
+        }
+
+        textarea:focus { outline: none; border-color: var(--primary); background: #fff; box-shadow: 0 0 0 4px rgba(26, 82, 118, 0.05); }
+
+        .control-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px; }
+
+        select {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            border: 2px solid var(--accent);
+            background: white;
+            font-weight: 600;
+            color: var(--text-main);
+            cursor: pointer;
+        }
+
+        .btn-prime {
+            grid-column: span 2;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 18px;
+            border-radius: var(--radius);
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-prime:hover { background: #154360; transform: translateY(-2px); }
+        .btn-prime:active { transform: translateY(0); }
+        .btn-prime:disabled { background: #BDC3C7; cursor: not-allowed; }
+
+        /* --- Results Area --- */
+        .results-wrapper { display: none; opacity: 0; transform: translateY(20px); transition: all 0.5s ease; }
+        .results-wrapper.active { display: block; opacity: 1; transform: translateY(0); }
+
+        .result-grid { display: grid; grid-template-columns: 1fr; gap: 15px; margin-top: 10px; }
+
+        .analysis-box {
+            padding: 20px;
+            border-radius: var(--radius);
+            background: #F8FBFE;
+            border-left: 6px solid var(--primary);
+        }
+
+        .analysis-box h3 { margin: 0 0 12px 0; font-size: 1.1rem; color: var(--primary); display: flex; align-items: center; gap: 8px; }
+        .analysis-box div { font-size: 0.95rem; line-height: 1.6; }
+
+        ul { margin: 0; padding-left: 20px; }
+        li { margin-bottom: 8px; }
+
+        /* --- Loading State --- */
+        .loader { display: none; margin: 20px 0; text-align: center; }
+        .spinner {
+            width: 40px; height: 40px; border: 4px solid var(--accent);
+            border-top: 4px solid var(--primary); border-radius: 50%;
+            animation: spin 1s linear infinite; display: inline-block;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* --- History Section --- */
+        .history { margin-top: 30px; opacity: 0.7; }
+        .history-item { 
+            padding: 10px; border-bottom: 1px solid var(--accent); 
+            display: flex; justify-content: space-between; font-size: 0.8rem;
+        }
+
+        /* --- Utility --- */
+        .badge { font-size: 0.7rem; padding: 2px 8px; border-radius: 20px; background: var(--accent); color: var(--primary); font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>ClarityPath</h1>
+            <p>Master Script v3.0 • Powered by Gemini 3.0 Fast</p>
+        </header>
+
+        <main class="card">
+            <label>Situation or Decision</label>
+            <textarea id="mainInput" placeholder="What happened, or what might happen? Be as detailed as possible..."></textarea>
+            
+            <div class="control-panel">
+                <div>
+                    <label>Intelligence Filter</label>
+                    <select id="framework">
+                        <option value="balanced">Balanced Insight</option>
+                        <option value="stoic">Stoic Logic</option>
+                        <option value="swot">SWOT Analysis</option>
+                        <option value="aggressive">High-Growth</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Output Scope</label>
+                    <select id="depth">
+                        <option value="standard">Standard</option>
+                        <option value="deep">Extreme Detail</option>
+                    </select>
+                </div>
+                <button class="btn-prime" id="goBtn" onclick="runClarityEngine()">
+                    <span id="btnText">Analyze Situation</span>
+                </button>
+            </div>
+        </main>
+
+        <div class="loader" id="loadingUI">
+            <div class="spinner"></div>
+            <p style="color:var(--primary); font-weight:600; margin-top:10px;">Gemini 3.0 Processing Variables...</p>
+        </div>
+
+        <section class="results-wrapper" id="resultsUI">
+            <div class="card" style="border-top: 5px solid var(--success);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                    <span class="badge" id="modelTag">GEMINI 3.0 FLASH</span>
+                    <span id="timestamp" style="font-size:0.7rem; color:var(--text-dim);"></span>
+                </div>
+                
+                <div class="result-grid">
+                    <div class="analysis-box">
+                        <h3>🔍 Logical Landscape</h3>
+                        <div id="outcomesOut"></div>
+                    </div>
+                    <div class="analysis-box" style="border-color: var(--secondary);">
+                        <h3>⚡ Actionable Strategy</h3>
+                        <div id="actionsOut"></div>
+                    </div>
+                    <div class="analysis-box" style="border-color: #F1C40F;">
+                        <h3>⚠️ Risk Assessment</h3>
+                        <div id="risksOut"></div>
+                    </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:20px;">
+                    <button class="btn-prime" style="background:var(--accent); color:var(--primary); padding:12px;" onclick="copyAnalysis()">Copy Report</button>
+                    <button class="btn-prime" style="background:transparent; border:2px solid var(--accent); color:var(--text-dim); padding:12px;" onclick="location.reload()">Reset</button>
+                </div>
+            </div>
+        </section>
+
+        <footer class="history">
+            <label>Local Session History</label>
+            <div id="historyList">
+                <p style="font-size:0.8rem; font-style:italic;">No scenarios recorded in this session.</p>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // CORE CONFIGURATION
+        const CONFIG = {
+            API_KEY: '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',
+            ENDPOINT: 'https://openrouter.ai/api/v1/chat/completions',
+            MODEL: 'google/gemini-3-flash:free' 
+        };
+
+        async function runClarityEngine() {
+            const input = document.getElementById('mainInput').value;
+            const framework = document.getElementById('framework').value;
+            const depth = document.getElementById('depth').value;
+            const btn = document.getElementById('goBtn');
+            const loader = document.getElementById('loadingUI');
+            const results = document.getElementById('resultsUI');
+
+            if (!input.trim()) {
+                alert("The engine requires a scenario to begin.");
+                return;
+            }
+
+            // UI State Lock
+            btn.disabled = true;
+            loader.style.display = 'block';
+            results.classList.remove('active');
+
+            const systemPrompt = `You are the ClarityPath Decision Engine. Analyze the situation through a ${framework} lens with ${depth} detail. 
+            Crucially, if the decision involves ethics, ensure it aligns with a respectful, Halal-conscious framework.
+            You MUST return a JSON object exactly like this:
+            {
+                "outcomes": "HTML bullet points of logic",
+                "actions": "HTML bullet points of steps",
+                "risks": "HTML bullet points of potential dangers"
+            }`;
+
+            try {
+                const response = await fetch(CONFIG.ENDPOINT, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${CONFIG.API_KEY}`,
+                        'Content-Type': 'application/json',
+                        'X-Title': 'ClarityPath Pro v3'
+                    },
+                    body: JSON.stringify({
+                        model: CONFIG.MODEL,
+                        messages: [
+                            { role: 'system', content: systemPrompt },
+                            { role: 'user', content: input }
+                        ],
+                        response_format: { type: "json_object" }
+                    })
+                });
+
+                if (!response.ok) throw new Error("Connection failed.");
+
+                const data = await response.json();
+                const content = JSON.parse(data.choices[0].message.content);
+
+                // Update UI
+                document.getElementById('outcomesOut').innerHTML = content.outcomes;
+                document.getElementById('actionsOut').innerHTML = content.actions;
+                document.getElementById('risksOut').innerHTML = content.risks;
+                document.getElementById('timestamp').innerText = new Date().toLocaleTimeString();
+
+                loader.style.display = 'none';
+                results.classList.add('active');
+                saveHistory(input);
+
+            } catch (err) {
+                console.error(err);
+                alert("Engine Timeout: Please verify your connection or API status.");
+                btn.disabled = false;
+                loader.style.display = 'none';
+            }
+        }
+
+        function saveHistory(text) {
+            const list = document.getElementById('historyList');
+            const snippet = text.substring(0, 35) + "...";
+            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            
+            const item = document.createElement('div');
+            item.className = 'history-item';
+            item.innerHTML = `<span>${snippet}</span><span style="color:var(--secondary)">${time}</span>`;
+            
+            if (list.querySelector('p')) list.innerHTML = '';
+            list.prepend(item);
+        }
+
+        function copyAnalysis() {
+            const text = `CLARITY PATH REPORT\n\nLOGIC:\n${document.getElementById('outcomesOut').innerText}\n\nACTIONS:\n${document.getElementById('actionsOut').innerText}`;
+            navigator.clipboard.writeText(text);
+            alert("Report copied to clipboard.");
+        }
+    </script>
+</body>
+</html>
